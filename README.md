@@ -5,5 +5,5 @@ The original version of the code is currently available. The code will be reorga
 
 Please write the fringe (.mat) into .csv files.
 
-The 3D volumetric data is too large to upload. Only the code is provided.
+The 3D volumetric data is too large to be uploaded. Only the code is provided.
 
