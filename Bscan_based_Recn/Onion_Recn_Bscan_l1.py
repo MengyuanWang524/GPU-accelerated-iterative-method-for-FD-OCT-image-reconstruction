@@ -8,11 +8,8 @@ import torch.utils.data as Data
 import pandas as pd
 from numpy import fft, cos, inf, save, savetxt, zeros, array, exp
 import matplotlib.pyplot as plt
+from util import forward
 
-def forward(input_r, S_k, matFourRe):
-    sampleRe =  torch.matmul(matFourRe, input_r)
-    output_fringe = S_k *((sampleRe))
-    return output_fringe
 
     
 def stochastic_gradient_descent(obj_est, target_fringe, Sk, matFourRe, lambdal1,
@@ -91,8 +88,11 @@ N = rownum
 factor = 2
 
 T = 1000
+### Decrease the fringe to 1/2 by seting deci to 2 
 deci = 1 
+
 deciST = int(1025 - M / deci / 2)
+
 deciEND = int(1024 + M / deci / 2)
 
 print(rownum)
@@ -125,15 +125,21 @@ matFourRec = exp(- 2 * 1j * X * Y)
 
 # # Optimization Initialization
 step_size = 100
+
 numIteration = 1000
+
 lossFunc = nn.MSELoss().to(device)
 
 time1 = time.time()
+
 fftinit = abs(torch.fft.ifft(fringe, dim = 0,n =2048* factor))
+
 time2 = time.time()
 
 print('time2-time1:',time2-time1)
+
 # FFT initialization
+
 # r0 = fftinit[0:T,:]
 # r0 = torch.tensor(r0, dtype=dtype, requires_grad=True).to(device)
 
@@ -146,6 +152,7 @@ Sk_tensor = torch.tensor(Sk, dtype=dtype).to(device)
 matFourRec_tensor = torch.tensor(matFourRec).to(device)
 
 matCosRec = torch.tensor(matFourRec_tensor.real, dtype= dtype)
+
 matSinRec = torch.tensor(matFourRec_tensor.imag, dtype= dtype)
 
 

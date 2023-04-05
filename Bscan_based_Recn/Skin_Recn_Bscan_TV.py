@@ -9,35 +9,32 @@ import pandas as pd
 from numpy import fft, cos, inf, save, savetxt, zeros, array, exp, conj, nan, isnan, pi, sin, seterr
 import matplotlib.pyplot as plt
 import torch_tb_profiler as profiler
-
-def forward(input_r, S_k, matFourRe):
-    sampleRe =  torch.matmul(matFourRe, input_r)
-    output_fringe = S_k *((sampleRe))
-    return output_fringe
-
-def TotalVariationLoss(input, weight):
-    input_r = 10* torch.log10(abs(input))
-    h_r = input_r.size(dim = 0)
-    w_r = input_r.size(dim = 1)
-    tv_h = torch.pow( input_r[1:,:] - input_r[:-1,:], 2 ).sum()
-    tv_w = torch.pow( input_r[:,1:] - input_r[:,:-1], 2 ).sum()
-    return weight*(tv_h+tv_w)/(h_r*w_r)
+from util import forward,TotalVariationLoss
 
     
 def stochastic_gradient_descent(obj_est, target_fringe, Sk, matFourRe, weightTV, lambdal1,
                                 num_iters, loss, lr):
     train_losses = zeros([num_iters])
+
     train_tvloss = zeros([num_iters])
+
     train_mseloss = zeros([num_iters])
+
     train_l1loss = zeros([num_iters])
-    fringe_est = zeros([])                      
+
+    fringe_est = zeros([])       
+
     device = obj_est.device
+    
     obj_est = torch.tensor(obj_est , requires_grad=True, device=device)
     # optimization variables and adam optimizer
     optvars = [{'params': obj_est}]
+
     optimizer = optim.Adam(optvars, lr=lr)
+
     tol = 1e-4
     scheduler = optim.lr_scheduler.StepLR(optimizer,50, 0.5)
+
     start = time.time()
     # run the iterative algorithm
     for k in range(num_iters):
@@ -64,13 +61,17 @@ def stochastic_gradient_descent(obj_est, target_fringe, Sk, matFourRe, weightTV,
         # scheduler.step()
         
         train_losses[k] = lossValue
+
         train_mseloss[k] = MSEloss
+
         train_tvloss[k] = TVloss
+
         train_l1loss[k] = L1loss
 
         # if (k>500) & (abs(train_losses[k]-train_losses[k-1] )< tol):
         #     print(k)
         #     break
+
     end = time.time()
     print('totol time:', end-start)
 
@@ -147,19 +148,23 @@ numIteration = 500
 lossFunc = nn.MSELoss().to(device )
 
 fftinit = abs(torch.fft.ifft(fringe, dim = 0))
+
 r0 = fftinit[0:T,:]
+
 r0 = torch.tensor(r0, dtype=dtype, requires_grad=True).to(device)
 
 # r0 = torch.zeros((T,colnum), dtype=dtype, requires_grad=True).to(device)
 # Sk_No = Sk / (torch.max(Sk))
 # Sk_No = Sk/ T * sum(Sk)
 # Sk = torch.ones((M,1))
+
 Sk_tensor = torch.tensor(Sk, dtype=dtype).to(device)
 
 
 matFourRec_tensor = torch.tensor(matFourRec).to(device)
 
 matCosRec = torch.tensor(matFourRec_tensor.real, dtype= dtype)
+
 matSinRec = torch.tensor(matFourRec_tensor.imag, dtype= dtype)
 
 
@@ -167,7 +172,9 @@ SGD = stochastic_gradient_descent( r0, fringe, Sk_tensor, matCosRec,weightTV, la
                             numIteration, loss=lossFunc, lr = step_size )
 
 r_N = SGD['obj_est'] 
-r_N = r_N.cpu().detach().numpy()  
+
+r_N = r_N.cpu().detach().numpy() 
+
 Rec =  abs(r_N) 
 
 np.savetxt(fname = 'Skin_%d_%f_%d_%f_%f.csv'%(numIteration, step_size, factor, weightTV,lambdal1), X = Rec, delimiter=',' )            
